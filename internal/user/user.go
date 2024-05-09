@@ -1,6 +1,9 @@
 package user
 
-import "database/sql"
+import (
+	"database/sql"
+	"golang.org/x/crypto/bcrypt"
+)
 
 type Service struct {
 	db *sql.DB
@@ -13,6 +16,26 @@ type User struct {
 
 func NewService(db *sql.DB) *Service {
 	return &Service{db: db}
+}
+
+func (s *Service) CreateUser(username, email, password string) error {
+	hashedPassword, err := HashPassword(password)
+	if err != nil {
+		return err
+	}
+	query := `INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`
+	_, err = s.db.Exec(query, username, email, hashedPassword)
+	return err
+}
+
+func (s *Service) AuthenticateUser(email, password string) (bool, error) {
+	var hashedPassword string
+	query := `SELECT password FROM users WHERE username = $1`
+	err := s.db.QueryRow(query, email).Scan(&hashedPassword)
+	if err != nil {
+		return false, err
+	}
+	return CheckPassword(hashedPassword, password), nil
 }
 
 func (s *Service) GetUserByID(id int) (*User, error) {
@@ -48,4 +71,17 @@ func (s *Service) UpdateUser(user *User) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func CheckPassword(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 }

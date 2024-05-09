@@ -1,5 +1,10 @@
 package config
 
+import (
+	"gopkg.in/yaml.v3"
+	"os"
+)
+
 type Config struct {
 	Server   Server
 	Postgres Postgres
@@ -7,28 +12,28 @@ type Config struct {
 
 type (
 	Server struct {
-		Port int
+		Adress string `yaml:"connection_string"`
 	}
 	Postgres struct {
-		Host     string
-		Port     int
-		User     string
-		Password string
-		Database string
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Database string `yaml:"database"`
 	}
 )
 
-func LoadConfig() (*Config, error) {
-	return &Config{
-		Server: Server{
-			Port: 8080,
-		},
-		Postgres: Postgres{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "postgres",
-			Password: "postgres",
-			Database: "postgres",
-		},
-	}, nil
+func LoadConfig(filename string) (*Config, error) {
+	var config Config
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
