@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"game-server-api/internal/config"
 	"game-server-api/internal/database"
+	"game-server-api/internal/handlers"
+	"game-server-api/internal/user"
+
+	//"game-server-api/internal/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -31,8 +35,11 @@ func main() {
 	}
 
 	db := database.NewConnection(*cfg)
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to connect to the database: %s", err)
+	}
 
-	//userService := user.NewService(db)
+	userService := user.NewService(db)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Server is running!")
@@ -45,8 +52,11 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/api/login", handlers.LoginHandler(userService))
+	http.HandleFunc("/api/register", handlers.RegisterHandler(userService))
+
 	log.Println("Starting server on port", cfg.Postgres.Port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", cfg.Postgres.Port), nil); err != nil {
-		log.Fatal("Server failed:", err)
+		log.Fatalf("Server failed: %s", err)
 	}
 }
