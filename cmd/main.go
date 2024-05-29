@@ -5,9 +5,9 @@ import (
 	"game-server-api/internal/config"
 	"game-server-api/internal/database"
 	"game-server-api/internal/handlers"
+	"game-server-api/internal/inventory"
 	"game-server-api/internal/user"
 
-	//"game-server-api/internal/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -40,6 +40,7 @@ func main() {
 	}
 
 	userService := user.NewService(db)
+	inventoryService := inventory.NewService(db)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Server is running!")
@@ -54,6 +55,9 @@ func main() {
 
 	http.HandleFunc("/api/login", handlers.LoginHandler(userService))
 	http.HandleFunc("/api/register", handlers.RegisterHandler(userService))
+	http.HandleFunc("/api/additem", handlers.AddItemHandler(inventoryService))
+	http.HandleFunc("/api/removeitem", handlers.RemoveItemHandler(inventoryService))
+	http.HandleFunc("/api/getitems", handlers.GetUserItemsHandler(inventoryService))
 
 	log.Println("Starting server on port", cfg.Postgres.Port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", cfg.Postgres.Port), nil); err != nil {

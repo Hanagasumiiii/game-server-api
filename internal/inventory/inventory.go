@@ -15,7 +15,7 @@ func NewService(db *sql.DB) *Service {
 	return &Service{db: db}
 }
 
-func (s *Service) AddItem(userID int, itemID int, quantity int) error {
+func (s *Service) AddItem(userID, itemID, quantity int) error {
 	query := `
 		INSERT INTO inventory (user_id, item_id, quantity) 
 		VALUES ($1, $2, $3) 
