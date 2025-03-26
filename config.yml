@@ -1,9 +1,0 @@
-server:
-  address: 8080
-
-postgres:
-  host: localhost
-  port: 8080
-  user: postgres
-  password:
-  database: game_db
